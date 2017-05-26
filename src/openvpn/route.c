@@ -1014,6 +1014,7 @@ redirect_default_route_to_vpn(struct route_list *rl, const struct tuntap *tt,
             msg(M_WARN, "%s VPN gateway parameter (--route-gateway or --ifconfig) is missing", err);
             ret = false;
         }
+#if !defined(ENABLE_NDM_INTEGRATION)
         /*
          * check if a default route is defined, unless:
          * - we are connecting to a remote host in our network
@@ -1025,6 +1026,7 @@ redirect_default_route_to_vpn(struct route_list *rl, const struct tuntap *tt,
             msg(M_WARN, "%s Cannot read current default gateway from system", err);
             ret = false;
         }
+#endif /* !defined(ENABLE_NDM_INTEGRATION) */
         else
         {
 #ifndef TARGET_ANDROID
@@ -1044,6 +1046,7 @@ redirect_default_route_to_vpn(struct route_list *rl, const struct tuntap *tt,
             }
             if (!local)
             {
+#if !defined(ENABLE_NDM_INTEGRATION)
                 /* route remote host to original default gateway */
                 /* if remote_host is not ipv4 (ie: ipv6), just skip
                  * adding this special /32 route */
@@ -1059,6 +1062,7 @@ redirect_default_route_to_vpn(struct route_list *rl, const struct tuntap *tt,
                     }
                 }
                 else
+#endif /* !defined(ENABLE_NDM_INTEGRATION) */
                 {
                     dmsg(D_ROUTE, "ROUTE remote_host protocol differs from tunneled");
                 }
