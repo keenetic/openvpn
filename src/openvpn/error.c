@@ -84,7 +84,7 @@ static bool suppress_timestamps; /* GLOBAL */
 
 /* The program name passed to syslog */
 #if SYSLOG_CAPABILITY
-static char *pgmname_syslog;  /* GLOBAL */
+char *pgmname_syslog = NULL;  /* GLOBAL */
 #endif
 
 /* If non-null, messages should be written here (used for debugging only) */
@@ -386,12 +386,16 @@ x_msg_va(const unsigned int flags, const char *format, va_list arglist)
 
     if (flags & M_FATAL)
     {
+#if SYSLOG_CAPABILITY
+        syslog(level, "Exiting due to fatal error");
+#else
         msg(M_INFO, "Exiting due to fatal error");
+#endif
     }
 
     if (flags & M_FATAL)
     {
-        openvpn_exit(OPENVPN_EXIT_STATUS_ERROR); /* exit point */
+        openvpn_exit( ((flags) & M_INVALIDCONFIG) ? OPENVPN_CONFIG_ERROR_EXITCODE_ : OPENVPN_EXIT_STATUS_ERROR); /* exit point */
 
     }
     if (flags & M_USAGE_SMALL)
@@ -474,7 +478,7 @@ open_syslog(const char *pgmname, bool stdio_to_null)
         if (!use_syslog)
         {
             pgmname_syslog = string_alloc(pgmname ? pgmname : PACKAGE, NULL);
-            openlog(pgmname_syslog, LOG_PID, LOG_OPENVPN);
+            openlog(pgmname_syslog, 0, LOG_OPENVPN);
             use_syslog = true;
 
             /* Better idea: somehow pipe stdout/stderr output to msg() */

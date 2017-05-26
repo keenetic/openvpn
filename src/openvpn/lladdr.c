@@ -15,17 +15,59 @@
 #include "lladdr.h"
 #include "proto.h"
 
+#if defined(ENABLE_NDM_INTEGRATION)
+#include <ndm/feedback.h>
+#include "ndm.h"
+#endif /* if defined(ENABLE_NDM_INTEGRATION) */
+
 int
 set_lladdr(openvpn_net_ctx_t *ctx, const char *ifname, const char *lladdr,
            const struct env_set *es)
 {
+#if !defined(ENABLE_NDM_INTEGRATION)
     int r;
+#endif /* if defined(ENABLE_NDM_INTEGRATION) */
 
     if (!ifname || !lladdr)
     {
         return -1;
     }
 
+#if defined(ENABLE_NDM_INTEGRATION)
+    {
+         char buf[1024];
+
+        memset(buf, 0, sizeof(buf));
+
+        snprintf(buf, sizeof(buf), "%s%s/%s",
+            NDM_OPENVPN_DIR,
+            NDM_INSTANCE_NAME,
+            NDM_FEEDBACK_NETWORK);
+
+        const char *args[] =
+        {
+            buf,
+            NDM_INSTANCE_NAME,
+            NDM_LLADDR,
+            NULL
+        };
+
+        if( !ndm_feedback(
+                NDM_FEEDBACK_TIMEOUT_MSEC,
+                args,
+                "%s=%s" NESEP_
+                "%s=%s",
+                "dev", ifname,
+                "lladdr", lladdr) )
+        {
+            msg(M_FATAL, "Unable to communicate with NDM core (lladdr)");
+
+            return 0;
+        }
+
+        return 1;
+    }
+#else /* if defined(ENABLE_NDM_INTEGRATION) */
 #if defined(TARGET_LINUX)
     uint8_t addr[OPENVPN_ETH_ALEN];
 
@@ -68,4 +110,5 @@ set_lladdr(openvpn_net_ctx_t *ctx, const char *ifname, const char *lladdr,
     }
 
     return r;
+#endif /* if defined(ENABLE_NDM_INTEGRATION) */
 }
