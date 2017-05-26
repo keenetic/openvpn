@@ -3271,6 +3271,7 @@ do_option_warnings(struct context *c)
 #endif
         )
     {
+#if !defined(ENABLE_NDM_INTEGRATION)
         if (!o->persist_tun)
         {
             msg(M_WARN, "WARNING: you are using user/group/chroot/setcon without persist-tun -- this may cause restarts to fail");
@@ -3283,6 +3284,7 @@ do_option_warnings(struct context *c)
         {
             msg(M_WARN, "WARNING: you are using user/group/chroot/setcon without persist-key -- this may cause restarts to fail");
         }
+#endif
     }
 
     if (o->chroot_dir && !(o->username && o->groupname))
@@ -3338,6 +3340,7 @@ do_option_warnings(struct context *c)
         msg(M_WARN, "WARNING: --ns-cert-type is DEPRECATED.  Use --remote-cert-tls instead.");
     }
 
+#if !defined(ENABLE_NDM_INTEGRATION)
     /* If a script is used, print appropriate warnings */
     if (o->user_script_used)
     {
@@ -3354,6 +3357,7 @@ do_option_warnings(struct context *c)
             msg(M_WARN, "NOTE: starting with " PACKAGE_NAME " 2.1, '--script-security 2' or higher is required to call user-defined scripts or executables");
         }
     }
+#endif /* if !defined(ENABLE_NDM_INTEGRATION) */
 }
 
 struct context_buffers *
