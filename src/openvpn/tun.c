@@ -57,6 +57,11 @@
 
 #include <string.h>
 
+#if defined(ENABLE_NDM_INTEGRATION)
+#include <ndm/feedback.h>
+#include "ndm.h"
+#endif /* if defined(ENABLE_NDM_INTEGRATION) */
+
 #ifdef _WIN32
 
 const static GUID GUID_DEVCLASS_NET = { 0x4d36e972L, 0xe325, 0x11ce, { 0xbf, 0xc1, 0x08, 0x00, 0x2b, 0xe1, 0x03, 0x18 } };
@@ -1262,6 +1267,57 @@ do_ifconfig_ipv4(struct tuntap *tt, const char *ifname, int tun_mtu,
     {
         msg(M_FATAL, "Linux can't set mtu (%d) on %s", tun_mtu, ifname);
     }
+#if defined(ENABLE_NDM_INTEGRATION)
+        {
+            char buf[1024];
+
+            memset(buf, 0, sizeof(buf));
+
+            snprintf(buf, sizeof(buf), "%s%s/%s",
+                NDM_OPENVPN_DIR,
+                NDM_INSTANCE_NAME,
+                NDM_FEEDBACK_NETWORK);
+
+            const char *args[] =
+            {
+                buf,
+                NDM_INSTANCE_NAME,
+                NDM_IFCONFIG,
+                NDM_ADD,
+                NULL
+            };
+            struct gc_arena gc = gc_new();
+            const char *ifconfig_local = print_in_addr_t(tt->local, 0, &gc);
+            const char *ifconfig_remote_netmask = print_in_addr_t(tt->remote_netmask, 0, &gc);
+
+            if( !ndm_feedback(
+                    NDM_FEEDBACK_TIMEOUT_MSEC,
+                    args,
+                    "%s=%s" NESEP_
+                    "%s=%s" NESEP_
+                    "%s=%d" NESEP_
+                    "%s=%s" NESEP_
+                    "%s=%s" NESEP_
+                    "%s=%d" NESEP_
+                    "%s=%d" NESEP_
+                    "%s=%d",
+                    "dev", ifname,
+                    "local", ifconfig_local,
+                    "localmask",
+                        tun ?
+                            -1 :
+                            netmask_to_netbits2(tt->remote_netmask),
+                    "peer", ifconfig_remote_netmask,
+                    "broadcast", "",
+                    "is_tun", TUNNEL_TYPE(tt) == DEV_TYPE_TUN ? 1 : 0,
+                    "is_tap", TUNNEL_TYPE(tt) == DEV_TYPE_TAP ? 1 : 0,
+                    "mtu", tun_mtu) )
+            {
+                msg(M_FATAL, "Unable to communicate with NDM core (ifconfig)");
+            }
+            gc_free(&gc);
+       }
+#else /* defined(ENABLE_NDM_INTEGRATION) */
 
     if (net_iface_up(ctx, ifname, true) < 0)
     {
@@ -1283,7 +1339,7 @@ do_ifconfig_ipv4(struct tuntap *tt, const char *ifname, int tun_mtu,
         {
             msg(M_FATAL, "Linux can't add IP to interface %s", ifname);
         }
-    }
+#endif /* defined(ENABLE_NDM_INTEGRATION) */
 #elif defined(TARGET_ANDROID)
     char out[64];
 
@@ -1627,6 +1683,36 @@ static void
 undo_ifconfig_ipv4(struct tuntap *tt, openvpn_net_ctx_t *ctx)
 {
 #if defined(TARGET_LINUX)
+#if defined(ENABLE_NDM_INTEGRATION)
+        {
+            char buf[1024];
+
+            memset(buf, 0, sizeof(buf));
+
+            snprintf(buf, sizeof(buf), "%s%s/%s",
+                NDM_OPENVPN_DIR,
+                NDM_INSTANCE_NAME,
+                NDM_FEEDBACK_NETWORK);
+
+            const char *args[] =
+            {
+                buf,
+                NDM_INSTANCE_NAME,
+                NDM_IFCONFIG,
+                NDM_DEL,
+                NULL
+            };
+
+            if( !ndm_feedback(
+                    NDM_FEEDBACK_TIMEOUT_MSEC,
+                    args,
+                    "%s=%s",
+                    "dev", tt->actual_name) )
+            {
+                msg(M_FATAL, "Unable to communicate with NDM core (shutdown)");
+            }
+       }
+#else /* defined(ENABLE_NDM_INTEGRATION) */
     int netbits = netmask_to_netbits2(tt->remote_netmask);
 
     if (is_tun_p2p(tt))
@@ -2172,6 +2258,7 @@ open_tun(const char *dev, const char *dev_type, const char *dev_node, struct tun
                 dev);
         }
 
+#if !defined(ENABLE_NDM_INTEGRATION)
         /*
          * Set an explicit name, if --dev is not tun or tap
          */
@@ -2179,6 +2266,7 @@ open_tun(const char *dev, const char *dev_type, const char *dev_node, struct tun
         {
             strncpynt(ifr.ifr_name, dev, IFNAMSIZ);
         }
+#endif /* ENABLE_NDM_INTEGRATION */
 
         /*
          * Use special ioctl that configures tun/tap device with the parms

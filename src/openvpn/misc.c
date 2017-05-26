@@ -51,6 +51,10 @@
 const char *iproute_path = IPROUTE_PATH; /* GLOBAL */
 #endif
 
+#if defined(ENABLE_NDM_INTEGRATION)
+#include "ndm.h"
+#endif /* if defined(ENABLE_NDM_INTEGRATION) */
+
 /*
  * Set standard file descriptors to /dev/null
  */
