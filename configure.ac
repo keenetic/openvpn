@@ -185,6 +185,13 @@ AC_ARG_ENABLE(
 )
 
 AC_ARG_ENABLE(
+	[ndm-integration],
+	[AS_HELP_STRING([--disable-ndm-integration], [disable NDM integration @<:@default=yes@:>@])],
+	,
+	[enable_ndm_integration="yes"]
+)
+
+AC_ARG_ENABLE(
 	[plugin-auth-pam],
 	[AS_HELP_STRING([--disable-plugin-auth-pam], [disable auth-pam plugin @<:@default=platform specific@:>@])],
 	,
@@ -1299,12 +1306,18 @@ test "${enable_small}" = "yes" && AC_DEFINE([ENABLE_SMALL], [1], [Enable smaller
 test "${enable_fragment}" = "yes" && AC_DEFINE([ENABLE_FRAGMENT], [1], [Enable internal fragmentation support])
 test "${enable_port_share}" = "yes" && AC_DEFINE([ENABLE_PORT_SHARE], [1], [Enable TCP Server port sharing])
 
+if test "${enable_ndm_integration}" = "yes"; then
+	LDFLAGS="${LDFLAGS} -lndm"
+	AC_DEFINE([ENABLE_NDM_INTEGRATION], [1], [Enable NDM integration])
+fi
+
 test "${enable_crypto_ofb_cfb}" = "yes" && AC_DEFINE([ENABLE_OFB_CFB_MODE], [1], [Enable OFB and CFB cipher modes])
 if test "${have_export_keying_material}" = "yes"; then
 	AC_DEFINE(
 		[HAVE_EXPORT_KEYING_MATERIAL], [1],
 		[Crypto library supports keying material exporter]
 	)
+
 fi
 OPTIONAL_CRYPTO_CFLAGS="${OPTIONAL_CRYPTO_CFLAGS} ${CRYPTO_CFLAGS}"
 OPTIONAL_CRYPTO_LIBS="${OPTIONAL_CRYPTO_LIBS} ${CRYPTO_LIBS}"
