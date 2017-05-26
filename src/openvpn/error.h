@@ -35,6 +35,10 @@
 #include <windows.h>
 #endif
 
+#if defined(ENABLE_NDM_INTEGRATION)
+extern char *pgmname_syslog;
+#endif /* defined(ENABLE_NDM_INTEGRATION) */
+
 /* #define ABORT_ON_ERROR */
 
 #if defined(ENABLE_PKCS11) || defined(ENABLE_MANAGEMENT)
@@ -81,6 +85,8 @@ const char *strerror_win32(DWORD errnum, struct gc_arena *gc);
 #define openvpn_errno() errno
 #endif
 
+#define OPENVPN_CONFIG_ERROR_EXITCODE_ 2
+
 /*
  * These globals should not be accessed directly,
  * but rather through macros or inline functions defined below.
@@ -106,6 +112,8 @@ extern int x_msg_line_num;
 #define M_OPTERR          (1<<15)        /* print "Options error:" prefix */
 #define M_NOLF            (1<<16)        /* don't print new line */
 #define M_NOIPREFIX       (1<<17)        /* don't print instance prefix */
+
+#define M_INVALIDCONFIG   (1<<30)        /* exit due to invalid config */
 
 /* flag combinations which are frequently used */
 #define M_ERR     (M_FATAL | M_ERRNO)
@@ -145,7 +153,7 @@ extern int x_msg_line_num;
 bool dont_mute(unsigned int flags);
 
 /* Macro to ensure (and teach static analysis tools) we exit on fatal errors */
-#define EXIT_FATAL(flags) do { if ((flags) & M_FATAL) {_exit(1);}} while (false)
+#define EXIT_FATAL(flags) do { if ((flags) & M_FATAL) { _exit( ((flags) & M_INVALIDCONFIG) ? OPENVPN_CONFIG_ERROR_EXITCODE_ : 1 ); }} while (false)
 
 #define msg(flags, ...) do { if (msg_test(flags)) {x_msg((flags), __VA_ARGS__);} EXIT_FATAL(flags); } while (false)
 #ifdef ENABLE_DEBUG

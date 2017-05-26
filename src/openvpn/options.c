@@ -68,10 +68,6 @@
 
 const char title_string[] =
     PACKAGE_STRING
-#ifdef CONFIGURE_GIT_REVISION
-    " [git:" CONFIGURE_GIT_REVISION CONFIGURE_GIT_FLAGS "]"
-#endif
-    " " TARGET_ALIAS
 #if defined(ENABLE_CRYPTO_MBEDTLS)
     " [SSL (mbed TLS)]"
 #elif defined(ENABLE_CRYPTO_OPENSSL)
@@ -110,7 +106,6 @@ const char title_string[] =
 #ifdef ENABLE_DCO
     " [DCO]"
 #endif
-    " built on " __DATE__
 ;
 
 #ifndef ENABLE_SMALL
@@ -2569,12 +2564,15 @@ options_postprocess_verify_ce(const struct options *options,
         {
             msg(M_USAGE, "--shaper cannot be used with --mode server");
         }
+
+#if !defined(ENABLE_NDM_INTEGRATION)
         if (options->ipchange)
         {
             msg(M_USAGE,
                 "--ipchange cannot be used with --mode server (use "
                 "--client-connect instead)");
         }
+#endif
         if (!(proto_is_dgram(ce->proto) || ce->proto == PROTO_TCP_SERVER))
         {
             msg(M_USAGE, USAGE_VALID_SERVER_PROTOS);
@@ -2681,6 +2679,7 @@ options_postprocess_verify_ce(const struct options *options,
         {
             msg(M_USAGE, "--hash-size requires --mode server");
         }
+#if !defined(ENABLE_NDM_INTEGRATION)
         if (options->learn_address_script)
         {
             msg(M_USAGE, "--learn-address requires --mode server");
@@ -2693,6 +2692,7 @@ options_postprocess_verify_ce(const struct options *options,
         {
             msg(M_USAGE, "--client-disconnect requires --mode server");
         }
+#endif
         if (options->client_config_dir || options->ccd_exclusive)
         {
             msg(M_USAGE, "--client-config-dir/--ccd-exclusive requires --mode server");
@@ -2731,10 +2731,12 @@ options_postprocess_verify_ce(const struct options *options,
                 "affect the server. To have TCP_NODELAY in both direction use "
                 "tcp-nodelay in the server configuration instead.");
         }
+#if !defined(ENABLE_NDM_INTEGRATION)
         if (options->auth_user_pass_verify_script)
         {
             msg(M_USAGE, "--auth-user-pass-verify requires --mode server");
         }
+#endif
         if (options->auth_token_generate)
         {
             msg(M_USAGE, "--auth-gen-token requires --mode server");
@@ -3006,7 +3008,9 @@ options_postprocess_verify_ce(const struct options *options,
         MUST_BE_UNDEF(cipher_list);
         MUST_BE_UNDEF(cipher_list_tls13);
         MUST_BE_UNDEF(tls_cert_profile);
+#if !defined(ENABLE_NDM_INTEGRATION)
         MUST_BE_UNDEF(tls_verify);
+#endif
         MUST_BE_UNDEF(tls_export_cert);
         MUST_BE_UNDEF(verify_x509_name);
         MUST_BE_UNDEF(tls_timeout);
@@ -5422,7 +5426,9 @@ verify_permission(const char *name,
 {
     if (!(type & allowed))
     {
-        msg(msglevel, "option '%s' cannot be used in this context (%s)", name, file);
+        int new_msglevel = (msglevel & M_FATAL) ? (M_FATAL | M_INVALIDCONFIG) : msglevel;
+
+        msg(new_msglevel, "option '%s' cannot be used in this context", name);
         return false;
     }
 
@@ -5438,7 +5444,6 @@ verify_permission(const char *name,
         *found |= type;
     }
 
-#ifndef ENABLE_SMALL
     /* Check if this options is allowed in connection block,
      * but we are currently not in a connection block
      * unless this is a pushed option.
@@ -5451,14 +5456,13 @@ verify_permission(const char *name,
     {
         if (file)
         {
-            msg(M_WARN, "Option '%s' in %s:%d is ignored by previous <connection> blocks ", name, file, line);
+            msg(M_WARN, "Option '%s' in line %d is ignored by previous <connection> blocks ", name, line);
         }
         else
         {
             msg(M_WARN, "Option '%s' is ignored by previous <connection> blocks", name);
         }
     }
-#endif
     return true;
 }
 
@@ -5585,7 +5589,7 @@ add_option(struct options *options,
 {
     struct gc_arena gc = gc_new();
     const bool pull_mode = BOOL_CAST(permission_mask & OPT_P_PULL_MODE);
-    int msglevel_fc = msglevel_forward_compatible(options, msglevel);
+    /* int msglevel_fc = msglevel_forward_compatible(options, msglevel); */
 
     ASSERT(MAX_PARMS >= 7);
 
@@ -5600,7 +5604,7 @@ add_option(struct options *options,
             p[2] = "setenv opt"; /* will trigger an error that includes setenv opt */
         }
         p += 2;
-        msglevel_fc = M_WARN;
+       /*  msglevel_fc = M_WARN; */
     }
 
     if (!file)
@@ -7055,7 +7059,7 @@ add_option(struct options *options,
             if (streq(p[1], "FORWARD_COMPATIBLE") && p[2] && streq(p[2], "1"))
             {
                 options->forward_compatible = true;
-                msglevel_fc = msglevel_forward_compatible(options, msglevel);
+               /* msglevel_fc = msglevel_forward_compatible(options, msglevel); */
             }
             setenv_str(es, p[1], p[2] ? p[2] : "");
         }
@@ -9271,7 +9275,7 @@ add_option(struct options *options,
     else
     {
         int i;
-        int msglevel = msglevel_fc;
+        int msglevel = M_FATAL | M_INVALIDCONFIG;
         /* Check if an option is in --ignore-unknown-option and
          * set warning level to non fatal */
         for (i = 0; options->ignore_unknown_option && options->ignore_unknown_option[i]; i++)
@@ -9282,9 +9286,10 @@ add_option(struct options *options,
                 break;
             }
         }
+
         if (file)
         {
-            msg(msglevel, "Unrecognized option or missing or extra parameter(s) in %s:%d: %s (%s)", file, line, p[0], PACKAGE_VERSION);
+            msg(msglevel, "Unrecognized option or missing or extra parameter(s) in configuration: (line %d): %s (%s)", line, p[0], PACKAGE_VERSION);
         }
         else
         {

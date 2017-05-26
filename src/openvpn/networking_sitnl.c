@@ -43,6 +43,11 @@
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 
+#if defined(ENABLE_NDM_INTEGRATION)
+#include <ndm/feedback.h>
+#include "ndm.h"
+#endif /* if defined(ENABLE_NDM_INTEGRATION) */
+
 #define SNDBUF_SIZE (1024 * 2)
 #define RCVBUF_SIZE (1024 * 4)
 
@@ -878,6 +883,7 @@ sitnl_addr_ptp_del(sa_family_t af_family, const char *iface,
     return sitnl_addr_set(RTM_DELADDR, 0, ifindex, af_family, local, NULL, 0);
 }
 
+#if !defined(ENABLE_NDM_INTEGRATION)
 static int
 sitnl_route_set(int cmd, uint32_t flags, int ifindex, sa_family_t af_family,
                 const void *dst, int prefixlen,
@@ -951,6 +957,7 @@ sitnl_route_set(int cmd, uint32_t flags, int ifindex, sa_family_t af_family,
 err:
     return ret;
 }
+#endif /* !defined(ENABLE_NDM_INTEGRATION) */
 
 static int
 sitnl_addr_add(sa_family_t af_family, const char *iface,
@@ -1149,6 +1156,7 @@ net_addr_ptp_v4_del(openvpn_net_ctx_t *ctx, const char *iface,
     return sitnl_addr_ptp_del(AF_INET, iface, &local_v4);
 }
 
+#if !defined(ENABLE_NDM_INTEGRATION)
 static int
 sitnl_route_add(const char *iface, sa_family_t af_family, const void *dst,
                 int prefixlen, const void *gw, uint32_t table, int metric)
@@ -1181,13 +1189,16 @@ sitnl_route_add(const char *iface, sa_family_t af_family, const void *dst,
                            af_family, dst, prefixlen, gw, table, metric, scope,
                            RTPROT_BOOT, RTN_UNICAST);
 }
+#endif /* !defined(ENABLE_NDM_INTEGRATION) */
 
 int
 net_route_v4_add(openvpn_net_ctx_t *ctx, const in_addr_t *dst, int prefixlen,
                  const in_addr_t *gw, const char *iface,
                  uint32_t table, int metric)
 {
+#if !defined(ENABLE_NDM_INTEGRATION)
     in_addr_t *dst_ptr = NULL, *gw_ptr = NULL;
+#endif /* !defined(ENABLE_NDM_INTEGRATION) */
     in_addr_t dst_be = 0, gw_be = 0;
     char dst_str[INET_ADDRSTRLEN];
     char gw_str[INET_ADDRSTRLEN];
@@ -1195,13 +1206,17 @@ net_route_v4_add(openvpn_net_ctx_t *ctx, const in_addr_t *dst, int prefixlen,
     if (dst)
     {
         dst_be = htonl(*dst);
+#if !defined(ENABLE_NDM_INTEGRATION)
         dst_ptr = &dst_be;
+#endif /* !defined(ENABLE_NDM_INTEGRATION) */
     }
 
     if (gw)
     {
         gw_be = htonl(*gw);
+#if !defined(ENABLE_NDM_INTEGRATION)
         gw_ptr = &gw_be;
+#endif /* !defined(ENABLE_NDM_INTEGRATION) */
     }
 
     msg(D_ROUTE, "%s: %s/%d via %s dev %s table %d metric %d", __func__,
@@ -1209,8 +1224,53 @@ net_route_v4_add(openvpn_net_ctx_t *ctx, const in_addr_t *dst, int prefixlen,
         prefixlen, inet_ntop(AF_INET, &gw_be, gw_str, sizeof(gw_str)),
         np(iface), table, metric);
 
+
+#if defined(ENABLE_NDM_INTEGRATION)
+    {
+        char buf[1024];
+
+        memset(buf, 0, sizeof(buf));
+
+        snprintf(buf, sizeof(buf), "%s%s/%s",
+            NDM_OPENVPN_DIR,
+            NDM_INSTANCE_NAME,
+            NDM_FEEDBACK_NETWORK);
+
+        const char *args[] =
+        {
+            buf,
+            NDM_INSTANCE_NAME,
+            NDM_ROUTE,
+            NDM_ADD,
+            NULL
+        };
+
+        if( !ndm_feedback(
+                NDM_FEEDBACK_TIMEOUT_MSEC,
+                args,
+                "%s=%s" NESEP_
+                "%s=%d" NESEP_
+                "%s=%d" NESEP_
+                "%s=%s" NESEP_
+                "%s=%s",
+                "network", dst_str,
+                "netmask", prefixlen,
+                "metric", metric,
+                "dev", iface,
+                "gw", gw_str
+                ) )
+        {
+            msg(M_FATAL, "Unable to communicate with NDM core (add route)");
+
+            return -EFAULT;
+        }
+
+        return 0;
+    }
+#else /* defined(ENABLE_NDM_INTEGRATION) */
     return sitnl_route_add(iface, AF_INET, dst_ptr, prefixlen, gw_ptr, table,
                            metric);
+#endif /* defined(ENABLE_NDM_INTEGRATION) */
 }
 
 int
@@ -1238,10 +1298,16 @@ net_route_v6_add(openvpn_net_ctx_t *ctx, const struct in6_addr *dst,
         prefixlen, inet_ntop(AF_INET6, &gw_v6.ipv6, gw_str, sizeof(gw_str)),
         np(iface), table, metric);
 
+#if defined(ENABLE_NDM_INTEGRATION)
+        msg(M_WARN, "IPv6 routes is not supported yet");
+        return -EINVAL;
+#else /* defined(ENABLE_NDM_INTEGRATION) */
     return sitnl_route_add(iface, AF_INET6, dst, prefixlen, gw, table,
                            metric);
+#endif /* defined(ENABLE_NDM_INTEGRATION) */
 }
 
+#if !defined(ENABLE_NDM_INTEGRATION)
 static int
 sitnl_route_del(const char *iface, sa_family_t af_family, inet_address_t *dst,
                 int prefixlen, inet_address_t *gw, uint32_t table,
@@ -1268,6 +1334,7 @@ sitnl_route_del(const char *iface, sa_family_t af_family, inet_address_t *dst,
     return sitnl_route_set(RTM_DELROUTE, 0, ifindex, af_family, dst, prefixlen,
                            gw, table, metric, RT_SCOPE_NOWHERE, 0, 0);
 }
+#endif /* !defined(ENABLE_NDM_INTEGRATION) */
 
 int
 net_route_v4_del(openvpn_net_ctx_t *ctx, const in_addr_t *dst, int prefixlen,
@@ -1294,8 +1361,50 @@ net_route_v4_del(openvpn_net_ctx_t *ctx, const in_addr_t *dst, int prefixlen,
         prefixlen, inet_ntop(AF_INET, &gw_v4.ipv4, gw_str, sizeof(gw_str)),
         np(iface), table, metric);
 
+#if defined(ENABLE_NDM_INTEGRATION)
+    {
+        char buf[1024];
+
+        memset(buf, 0, sizeof(buf));
+
+        snprintf(buf, sizeof(buf), "%s%s/%s",
+            NDM_OPENVPN_DIR,
+            NDM_INSTANCE_NAME,
+            NDM_FEEDBACK_NETWORK);
+
+        const char *args[] =
+        {
+            buf,
+            NDM_INSTANCE_NAME,
+            NDM_ROUTE,
+            NDM_DEL,
+            NULL
+        };
+
+        if( !ndm_feedback(
+                NDM_FEEDBACK_TIMEOUT_MSEC,
+                args,
+                "%s=%s" NESEP_
+                "%s=%d" NESEP_
+                "%s=%s" NESEP_
+                "%s=%d",
+                "network", dst_str,
+                "netmask", prefixlen,
+                "gw", gw_str,
+                "metric", metric
+                ) )
+        {
+            msg(M_FATAL, "Unable to communicate with NDM core (del route)");
+
+            return -EFAULT;
+        }
+
+        return 0;
+    }
+#else /* defined(ENABLE_NDM_INTEGRATION) */
     return sitnl_route_del(iface, AF_INET, &dst_v4, prefixlen, &gw_v4, table,
                            metric);
+#endif /* defined(ENABLE_NDM_INTEGRATION) */
 }
 
 int
@@ -1323,8 +1432,13 @@ net_route_v6_del(openvpn_net_ctx_t *ctx, const struct in6_addr *dst,
         prefixlen, inet_ntop(AF_INET6, &gw_v6.ipv6, gw_str, sizeof(gw_str)),
         np(iface), table, metric);
 
+#if defined(ENABLE_NDM_INTEGRATION)
+        msg(M_WARN, "IPv6 routes is not supported yet");
+        return -EINVAL;
+#else /* defined(ENABLE_NDM_INTEGRATION) */
     return sitnl_route_del(iface, AF_INET6, &dst_v6, prefixlen, &gw_v6,
                            table, metric);
+#endif /* defined(ENABLE_NDM_INTEGRATION) */
 }
 
 
