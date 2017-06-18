@@ -119,6 +119,7 @@ struct static_challenge_info {};
 #define GET_USER_PASS_STATIC_CHALLENGE_ECHO  (1<<9) /* SCRV1 protocol -- echo response */
 
 #define GET_USER_PASS_INLINE_CREDS (1<<10)  /* indicates that auth_file is actually inline creds */
+#define GET_USER_PASS_PKCS         (1<<11)
 
 bool get_user_pass_cr(struct user_pass *up,
                       const char *auth_file,
@@ -132,7 +133,17 @@ get_user_pass(struct user_pass *up,
               const char *prefix,
               const unsigned int flags)
 {
-    return get_user_pass_cr(up, auth_file, prefix, flags, NULL);
+    const unsigned int is_pkcs = flags & GET_USER_PASS_PKCS;
+    const unsigned int is_pass_only = flags & GET_USER_PASS_PASSWORD_ONLY;
+    return get_user_pass_cr(up, auth_file, prefix,
+#if defined(ENABLE_NDM_INTEGRATION)
+        GET_USER_PASS_INLINE_CREDS |
+            (is_pkcs ? GET_USER_PASS_PKCS : 0) |
+            (is_pass_only ? GET_USER_PASS_PASSWORD_ONLY : 0),
+#else
+        flags,
+#endif /* #if defined(ENABLE_NDM_INTEGRATION) */
+        NULL);
 }
 
 void fail_user_pass(const char *prefix,
