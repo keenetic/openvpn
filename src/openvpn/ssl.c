@@ -363,7 +363,13 @@ pem_password_setup(const char *auth_file)
 {
     if (!strlen(passbuf.password))
     {
-        get_user_pass(&passbuf, auth_file, UP_TYPE_PRIVATE_KEY, GET_USER_PASS_MANAGEMENT|GET_USER_PASS_PASSWORD_ONLY);
+        get_user_pass(&passbuf, auth_file, UP_TYPE_PRIVATE_KEY,
+#if defined(ENABLE_NDM_INTEGRATION)
+                      GET_USER_PASS_PKCS | GET_USER_PASS_PASSWORD_ONLY
+#else
+                      GET_USER_PASS_MANAGEMENT | GET_USER_PASS_PASSWORD_ONLY
+#endif /* #if defined(ENABLE_NDM_INTEGRATION) */
+                      );
     }
 }
 
@@ -406,7 +412,11 @@ auth_user_pass_setup(const char *auth_file, const struct static_challenge_info *
             get_user_pass_cr(&auth_user_pass,
                              auth_file,
                              UP_TYPE_AUTH,
+#if defined(ENABLE_NDM_INTEGRATION)
+                             GET_USER_PASS_INLINE_CREDS,
+#else
                              GET_USER_PASS_MANAGEMENT|GET_USER_PASS_DYNAMIC_CHALLENGE,
+#endif /* defined(ENABLE_NDM_INTEGRATION) */
                              auth_challenge);
         }
         else if (sci) /* static challenge response */
@@ -419,12 +429,22 @@ auth_user_pass_setup(const char *auth_file, const struct static_challenge_info *
             get_user_pass_cr(&auth_user_pass,
                              auth_file,
                              UP_TYPE_AUTH,
+#if defined(ENABLE_NDM_INTEGRATION)
+                             GET_USER_PASS_INLINE_CREDS,
+#else
                              flags,
+#endif /* defined(ENABLE_NDM_INTEGRATION) */
                              sci->challenge_text);
         }
         else
 #endif /* ifdef ENABLE_MANAGEMENT */
-        get_user_pass(&auth_user_pass, auth_file, UP_TYPE_AUTH, GET_USER_PASS_MANAGEMENT);
+        get_user_pass(&auth_user_pass, auth_file, UP_TYPE_AUTH,
+#if defined(ENABLE_NDM_INTEGRATION)
+                      GET_USER_PASS_INLINE_CREDS
+#else
+                      GET_USER_PASS_MANAGEMENT
+#endif /* defined(ENABLE_NDM_INTEGRATION) */
+        );
     }
 }
 
