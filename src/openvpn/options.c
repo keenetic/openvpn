@@ -7872,6 +7872,7 @@ add_option(struct options *options,
     else if (streq(p[0], "auth-user-pass") && !p[2])
     {
         VERIFY_PERMISSION(OPT_P_GENERAL|OPT_P_INLINE);
+
         if (p[1])
         {
             options->auth_user_pass_file = p[1];
@@ -7879,7 +7880,9 @@ add_option(struct options *options,
         }
         else
         {
-            options->auth_user_pass_file = "stdin";
+            msg(M_FATAL | M_INVALIDCONFIG,
+                "auth-user-pass without inline credentials data is not supported");
+            goto err;
         }
     }
     else if (streq(p[0], "auth-retry") && p[1] && !p[2])
@@ -8913,7 +8916,7 @@ add_option(struct options *options,
 #endif /* ENABLE_CRYPTO_MBEDTLS */
     else if (streq(p[0], "askpass") && !p[2])
     {
-        VERIFY_PERMISSION(OPT_P_GENERAL);
+        VERIFY_PERMISSION(OPT_P_GENERAL|OPT_P_INLINE);
         if (p[1])
         {
             options->key_pass_file = p[1];

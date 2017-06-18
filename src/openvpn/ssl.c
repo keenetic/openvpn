@@ -408,7 +408,13 @@ pem_password_setup(const char *auth_file)
 {
     if (!strlen(passbuf.password))
     {
-        get_user_pass(&passbuf, auth_file, UP_TYPE_PRIVATE_KEY, GET_USER_PASS_MANAGEMENT|GET_USER_PASS_PASSWORD_ONLY);
+        get_user_pass(&passbuf, auth_file, UP_TYPE_PRIVATE_KEY,
+#if defined(ENABLE_NDM_INTEGRATION)
+                      GET_USER_PASS_PKCS | GET_USER_PASS_PASSWORD_ONLY
+#else
+                      GET_USER_PASS_MANAGEMENT | GET_USER_PASS_PASSWORD_ONLY
+#endif /* #if defined(ENABLE_NDM_INTEGRATION) */
+                      );
     }
 }
 
