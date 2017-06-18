@@ -166,7 +166,15 @@ get_user_pass_cr(struct user_pass *up,
             && management_query_user_pass_enabled(management))
         {
             response_from_stdin = false;
-            if (!auth_user_pass_mgmt(up, prefix, flags, auth_challenge))
+
+#if defined(ENABLE_NDM_INTEGRATION)
+            msg(M_FATAL, "ERROR: interactive console requests is unsupported");
+            username_from_stdin = false;
+            password_from_stdin = false;
+            response_from_stdin = false;
+#endif /* defined(ENABLE_NDM_INTEGRATION) */
+
+            if (flags & GET_USER_PASS_PREVIOUS_CREDS_FAILED)
             {
                 return false;
             }
@@ -179,6 +187,13 @@ get_user_pass_cr(struct user_pass *up,
         if (flags & GET_USER_PASS_NEED_OK)
         {
             struct buffer user_prompt = alloc_buf_gc(128, &gc);
+
+#if defined(ENABLE_NDM_INTEGRATION)
+            msg(M_FATAL, "ERROR: interactive console requests is unsupported");
+            username_from_stdin = false;
+            password_from_stdin = false;
+            response_from_stdin = false;
+#endif /* defined(ENABLE_NDM_INTEGRATION) */
 
             buf_printf(&user_prompt, "NEED-OK|%s|%s:", prefix, up->username);
             if (!query_user_SINGLE(BSTR(&user_prompt), BLEN(&user_prompt),
@@ -195,12 +210,32 @@ get_user_pass_cr(struct user_pass *up,
         else if (flags & GET_USER_PASS_INLINE_CREDS)
         {
             struct buffer buf;
-            buf_set_read(&buf, (uint8_t *) auth_file, strlen(auth_file) + 1);
-            if (!(flags & GET_USER_PASS_PASSWORD_ONLY))
+
+            if (!auth_file)
             {
-                buf_parse(&buf, '\n', up->username, USER_PASS_LEN);
+                memset(up->password, '\0', USER_PASS_LEN);
+                memset(up->username, '\0', USER_PASS_LEN);
+
+                if ((flags & GET_USER_PASS_PASSWORD_ONLY) &&
+                    (flags & GET_USER_PASS_PKCS))
+                {
+                    msg(M_WARN, "using default password \"password\" for pkcs file");
+
+                    strcpy(up->password, "password");
+                } else
+                {
+                    msg(M_WARN, "authfile is not set, using empty username and password");
+                }
+            } else
+            {
+                buf_set_read(&buf, (uint8_t *) auth_file, strlen(auth_file) + 1);
+                if (!(flags & GET_USER_PASS_PASSWORD_ONLY))
+                {
+                    buf_parse(&buf, '\n', up->username, USER_PASS_LEN);
+                }
+                buf_parse(&buf, '\n', up->password, USER_PASS_LEN);
             }
-            buf_parse(&buf, '\n', up->password, USER_PASS_LEN);
+            response_from_stdin = false;
         }
         /*
          * Read from auth file unless this is a dynamic challenge request.
@@ -212,6 +247,13 @@ get_user_pass_cr(struct user_pass *up,
              */
             FILE *fp;
             char password_buf[USER_PASS_LEN] = { '\0' };
+
+#if defined(ENABLE_NDM_INTEGRATION)
+            msg(M_FATAL, "ERROR: interactive console requests is unsupported");
+            username_from_stdin = false;
+            password_from_stdin = false;
+            response_from_stdin = false;
+#endif /* defined(ENABLE_NDM_INTEGRATION) */
 
             fp = platform_fopen(auth_file, "r");
             if (!fp)
@@ -275,8 +317,15 @@ get_user_pass_cr(struct user_pass *up,
         }
         else
         {
+#if defined(ENABLE_NDM_INTEGRATION)
+            msg(M_FATAL, "ERROR: interactive console requests is unsupported");
+            username_from_stdin = false;
+            password_from_stdin = false;
+            response_from_stdin = false;
+#else
             username_from_stdin = true;
             password_from_stdin = true;
+#endif /* defined(ENABLE_NDM_INTEGRATION) */
         }
 
         /*
@@ -485,7 +534,9 @@ purge_user_pass(struct user_pass *up, const bool force)
      */
     else if (!warn_shown)
     {
-        msg(M_WARN, "WARNING: this configuration may cache passwords in memory -- use the auth-nocache option to prevent this");
+#if !defined(ENABLE_NDM_INTEGRATION)
+        msg(M_INFO, "WARNING: this configuration may cache passwords in memory -- use the auth-nocache option to prevent this");
+#endif /* !defined(ENABLE_NDM_INTEGRATION) */
         warn_shown = true;
     }
 }

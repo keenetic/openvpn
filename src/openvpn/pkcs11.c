@@ -257,7 +257,7 @@ _pkcs11_openvpn_pin_prompt(
             &token_pass,
             NULL,
             prompt,
-            GET_USER_PASS_MANAGEMENT|GET_USER_PASS_PASSWORD_ONLY|GET_USER_PASS_NOFATAL
+            GET_USER_PASS_MANAGEMENT|GET_USER_PASS_PASSWORD_ONLY|GET_USER_PASS_NOFATAL|GET_USER_PASS_PKCS
             )
         )
     {

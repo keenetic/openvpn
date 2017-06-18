@@ -7674,14 +7674,15 @@ add_option(struct options *options,
     }
     else if (streq(p[0], "auth-user-pass") && !p[2])
     {
-        VERIFY_PERMISSION(OPT_P_GENERAL);
-        if (p[1])
+        VERIFY_PERMISSION(OPT_P_GENERAL|OPT_P_INLINE);
+        if (p[1] && !p[2] && is_inline)
         {
             options->auth_user_pass_file = p[1];
-        }
-        else
+        } else
         {
-            options->auth_user_pass_file = "stdin";
+            msg(M_FATAL | M_INVALIDCONFIG,
+                "auth-user-pass without inline credentials data is not supported");
+            goto err;
         }
     }
     else if (streq(p[0], "auth-retry") && p[1] && !p[2])
