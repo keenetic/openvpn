@@ -447,9 +447,13 @@ process_signal(struct context *c)
 void
 register_signal(struct context *c, int sig, const char *text)
 {
+#if defined(ENABLE_NDM_INTEGRATION)
+    c->sig->signal_received = SIGTERM;
+#else
     if (c->sig->signal_received != SIGTERM)
     {
         c->sig->signal_received = sig;
     }
+#endif /* defined(ENABLE_NDM_INTEGRATION) */
     c->sig->signal_text = text;
 }
