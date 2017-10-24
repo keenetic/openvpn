@@ -1798,6 +1798,7 @@ resolve_remote(struct link_socket *sock,
         }
     }
 
+#if !defined(ENABLE_NDM_INTEGRATION)
     /* should we re-use previous active remote address? */
     if (link_socket_actual_defined(&sock->info.lsa->actual))
     {
@@ -1809,6 +1810,7 @@ resolve_remote(struct link_socket *sock,
         }
     }
     else
+#endif /* !defined(ENABLE_NDM_INTEGRATION) */
     {
         CLEAR(sock->info.lsa->actual);
         if (sock->info.lsa->current_remote)
