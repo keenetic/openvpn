@@ -1100,6 +1100,16 @@ bind_local(struct link_socket *sock, const sa_family_t ai_family)
                         "TCP/UDP", sock->info.bind_ipv6_only);
         }
     }
+
+    if (sock->bindtodevice != NULL && sock->bindtodevice[0] != '\0')
+    {
+        if (setsockopt(sock->sd, SOL_SOCKET, SO_BINDTODEVICE,
+                       (void *) sock->bindtodevice,
+                       strlen(sock->bindtodevice) + 1) < 0)
+        {
+            msg(M_ERR, "Socket: Cannot setsockopt SO_BINDTODEVICE on socket");
+        }
+    }
 }
 
 static void
@@ -1841,6 +1851,7 @@ link_socket_init_phase1(struct context *c, int mode)
     sock->local_port = o->ce.local_port;
     sock->remote_host = remote_host;
     sock->remote_port = remote_port;
+    sock->bindtodevice = o->bindtodevice;
     sock->dns_cache = c->c1.dns_cache;
     sock->http_proxy = c->c1.http_proxy;
     sock->socks_proxy = c->c1.socks_proxy;

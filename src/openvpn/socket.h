@@ -187,6 +187,7 @@ struct link_socket
     const char *remote_port;
     const char *local_host;
     const char *local_port;
+    const char *bindtodevice;
     struct cached_dns_entry *dns_cache;
     bool bind_local;
 

@@ -270,6 +270,7 @@ struct options
     int connect_retry_max;
     struct connection_entry ce;
     struct connection_list *connection_list;
+    const char* bindtodevice;
 
     struct remote_list *remote_list;
     /* Do not advanced the connection or remote addr list*/

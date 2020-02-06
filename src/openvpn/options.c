@@ -825,6 +825,7 @@ init_options(struct options *o, const bool init_gc)
     o->resolve_retry_seconds = RESOLV_RETRY_INFINITE;
     o->resolve_in_advance = false;
     o->proto_force = -1;
+    o->bindtodevice = NULL;
     o->occ = true;
 #ifdef ENABLE_MANAGEMENT
     o->management_log_history_cache = 250;
@@ -2362,7 +2363,7 @@ options_postprocess_verify_ce(const struct options *options,
         msg(M_USAGE, "--bind and --nobind can't be used together");
     }
 
-    if (ce->local && !ce->bind_local)
+    if (ce->local && options->bindtodevice == NULL && !ce->bind_local)
     {
         msg(M_USAGE,
             "--local and --nobind don't make sense when used together");
@@ -3074,6 +3075,11 @@ options_postprocess_mutate_ce(struct options *o, struct connection_entry *ce)
 
     /* an option is present that requires local bind to enabled */
     bool need_bind = ce->local || ce->local_port_defined || ce->bind_defined;
+
+    if (ce->local != NULL && o->bindtodevice != NULL && !ce->bind_local)
+    {
+        ce->bind_local = true;
+    }
 
     /* socks proxy is enabled */
     bool uses_socks = ce->proto == PROTO_UDP && ce->socks_proxy_server;
@@ -6074,6 +6080,10 @@ add_option(struct options *options,
         }
     }
 #endif
+    else if (streq(p[0], "sobindtodevice") && p[1])
+    {
+        options->bindtodevice = p[1];
+    }
     else if (streq(p[0], "remote") && p[1] && !p[4])
     {
         struct remote_entry re;
