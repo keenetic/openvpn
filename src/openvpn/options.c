@@ -902,6 +902,8 @@ init_options(struct options *o, const bool init_gc)
 #ifndef ENABLE_DCO
     o->tuntap_options.disable_dco = true;
 #endif /* ENABLE_DCO */
+
+    o->remote_random = true;
 }
 
 void
