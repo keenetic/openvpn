@@ -897,6 +897,7 @@ init_options(struct options *o, const bool init_gc)
     }
 #endif /* _WIN32 */
     o->allow_recursive_routing = false;
+    o->remote_random = true;
 }
 
 void
