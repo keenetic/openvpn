@@ -1763,7 +1763,7 @@ do_open_tun(struct context *c)
 #endif
     /* open the tun device */
     open_tun(c->options.dev, c->options.dev_type, c->options.dev_node,
-             c->c1.tuntap);
+             c->c1.tuntap, &c->net_ctx);
 
     /* set the hardware address */
     if (c->options.lladdr)
