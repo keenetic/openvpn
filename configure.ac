@@ -1500,9 +1500,6 @@ AC_CONFIG_FILES([
 	build/Makefile
 	distro/Makefile
 	distro/systemd/Makefile
-	doc/Makefile
-	doc/doxygen/Makefile
-	doc/doxygen/openvpn.doxyfile
 	include/Makefile
 	sample/sample-plugins/Makefile
 	src/Makefile
