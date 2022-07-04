@@ -297,6 +297,7 @@ static int
 ovpn_nl_cb_error(struct sockaddr_nl (*nla) __attribute__ ((unused)),
                  struct nlmsgerr *err, void *arg)
 {
+#if !defined(ENABLE_NDM_INTEGRATION)
     struct nlmsghdr *nlh = (struct nlmsghdr *)err - 1;
     struct nlattr *tb_msg[NLMSGERR_ATTR_MAX + 1];
     int len = nlh->nlmsg_len;
@@ -332,6 +333,9 @@ ovpn_nl_cb_error(struct sockaddr_nl (*nla) __attribute__ ((unused)),
         msg(M_WARN, "kernel error: %*s\n", len,
             (char *)nla_data(tb_msg[NLMSGERR_ATTR_MSG]));
     }
+#else
+    msg(M_WARN, "DCO kernel error");
+#endif
 
     return NL_STOP;
 }
