@@ -1045,6 +1045,58 @@ do_ifconfig_ipv6(struct tuntap *tt, const char *ifname, int tun_mtu,
 #endif
 
 #if defined(TARGET_LINUX)
+#if defined(ENABLE_NDM_INTEGRATION)
+    {
+        char buf[1024];
+
+        memset(buf, 0, sizeof(buf));
+
+        snprintf(buf, sizeof(buf), "%s%s/%s",
+            NDM_OPENVPN_DIR,
+            NDM_INSTANCE_NAME,
+            NDM_FEEDBACK_NETWORK);
+
+        const char *args[] =
+        {
+            buf,
+            NDM_INSTANCE_NAME,
+            NDM_IFCONFIG,
+            NDM_ADD6,
+            NULL
+        };
+        struct gc_arena gc = gc_new();
+        const char *ifconfig_ipv6_local = print_in6_addr(tt->local_ipv6, 0, &gc);
+        const char *ifconfig_ipv6_remote = print_in6_addr(tt->remote_ipv6, 0, &gc);
+        bool tun = is_tun_p2p(tt);
+
+        if( !ndm_feedback(
+                NDM_FEEDBACK_TIMEOUT_MSEC,
+                args,
+                "%s=%s" NESEP_
+                "%s=%s" NESEP_
+                "%s=%d" NESEP_
+                "%s=%s" NESEP_
+                "%s=%s" NESEP_
+                "%s=%d" NESEP_
+                "%s=%d" NESEP_
+                "%s=%d",
+                "dev", ifname,
+                "local", ifconfig_ipv6_local,
+                "localmask",
+                    tun ?
+                        -1 :
+                        tt->netbits_ipv6,
+                 "peer", ifconfig_ipv6_remote,
+                 "broadcast", "",
+                 "is_tun", TUNNEL_TYPE(tt) == DEV_TYPE_TUN ? 1 : 0,
+                 "is_tap", TUNNEL_TYPE(tt) == DEV_TYPE_TAP ? 1 : 0,
+                 "mtu", tun_mtu) )
+        {
+            msg(M_FATAL, "Unable to communicate with NDM core (ifconfig)");
+        }
+        gc_free(&gc);
+    }
+#else /* defined(ENABLE_NDM_INTEGRATION) */
     if (net_iface_mtu_set(ctx, ifname, tun_mtu) < 0)
     {
         msg(M_FATAL, "Linux can't set mtu (%d) on %s", tun_mtu, ifname);
@@ -1060,6 +1112,7 @@ do_ifconfig_ipv6(struct tuntap *tt, const char *ifname, int tun_mtu,
     {
         msg(M_FATAL, "Linux can't add IPv6 to interface %s", ifname);
     }
+#endif /* defined(ENABLE_NDM_INTEGRATION) */
 #elif defined(TARGET_ANDROID)
     char out6[64];
 
@@ -1732,6 +1785,7 @@ undo_ifconfig_ipv4(struct tuntap *tt, openvpn_net_ctx_t *ctx)
                 tt->actual_name);
         }
     }
+#endif /* defined(ENABLE_NDM_INTEGRATION) */
 #elif defined(TARGET_FREEBSD)
     struct gc_arena gc = gc_new();
     const char *ifconfig_local = print_in_addr_t(tt->local, 0, &gc);
@@ -1752,11 +1806,42 @@ static void
 undo_ifconfig_ipv6(struct tuntap *tt, openvpn_net_ctx_t *ctx)
 {
 #if defined(TARGET_LINUX)
+#if defined(ENABLE_NDM_INTEGRATION)
+    {
+        char buf[1024];
+
+        memset(buf, 0, sizeof(buf));
+
+        snprintf(buf, sizeof(buf), "%s%s/%s",
+            NDM_OPENVPN_DIR,
+            NDM_INSTANCE_NAME,
+            NDM_FEEDBACK_NETWORK);
+
+         const char *args[] =
+         {
+             buf,
+             NDM_INSTANCE_NAME,
+             NDM_IFCONFIG,
+             NDM_DEL6,
+             NULL
+         };
+
+         if( !ndm_feedback(
+                NDM_FEEDBACK_TIMEOUT_MSEC,
+                args,
+                "%s=%s",
+                "dev", tt->actual_name) )
+         {
+             msg(M_FATAL, "Unable to communicate with NDM core (shutdown)");
+         }
+    }
+#else /* defined(ENABLE_NDM_INTEGRATION) */
     if (net_addr_v6_del(ctx, tt->actual_name, &tt->local_ipv6,
                         tt->netbits_ipv6) < 0)
     {
         msg(M_WARN, "Linux can't del IPv6 from iface %s", tt->actual_name);
     }
+#endif /* defined(ENABLE_NDM_INTEGRATION) */
 #elif defined(TARGET_FREEBSD)
     struct gc_arena gc = gc_new();
     const char *ifconfig_ipv6_local = print_in6_addr(tt->local_ipv6, 0, &gc);

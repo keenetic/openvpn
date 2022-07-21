@@ -424,7 +424,8 @@ set_sock_extended_error_passing(int sd, sa_family_t proto_af)
      * this only works on IPv6 sockets
      */
     if (proto_af == AF_INET6
-        && setsockopt(sd, IPPROTO_IPV6, IPV6_RECVERR, (void *) &on, sizeof(on)) != 0)
+        && setsockopt(sd, IPPROTO_IPV6, IPV6_RECVERR, (void *) &on, sizeof(on)) != 0 &&
+        errno != ENOPROTOOPT)
     {
         msg(M_WARN | M_ERRNO,
             "Note: enable extended error passing on TCP/UDP socket failed (IPV6_RECVERR)");

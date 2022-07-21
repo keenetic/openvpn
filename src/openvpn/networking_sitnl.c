@@ -1298,8 +1298,51 @@ net_route_v6_add(openvpn_net_ctx_t *ctx, const struct in6_addr *dst,
         np(iface), table, metric);
 
 #if defined(ENABLE_NDM_INTEGRATION)
-        msg(M_WARN, "IPv6 routes is not supported yet");
-        return -EINVAL;
+
+    inet_ntop(AF_INET6, &dst_v6.ipv6, dst_str, sizeof(dst_str));
+    inet_ntop(AF_INET6, &gw_v6.ipv6, gw_str, sizeof(gw_str));
+
+    {
+        char buf[1024];
+
+        memset(buf, 0, sizeof(buf));
+
+        snprintf(buf, sizeof(buf), "%s%s/%s",
+            NDM_OPENVPN_DIR,
+            NDM_INSTANCE_NAME,
+            NDM_FEEDBACK_NETWORK);
+
+        const char *args[] =
+        {
+            buf,
+            NDM_INSTANCE_NAME,
+            NDM_ROUTE,
+            NDM_ADD6,
+            NULL
+        };
+
+        if( !ndm_feedback(
+                NDM_FEEDBACK_TIMEOUT_MSEC,
+                args,
+                "%s=%s" NESEP_
+                "%s=%d" NESEP_
+                "%s=%d" NESEP_
+                "%s=%s" NESEP_
+                "%s=%s",
+                "network", dst_str,
+                "netmask", prefixlen,
+                "metric", metric,
+                "dev", iface,
+                "gw", gw_str
+                ) )
+        {
+            msg(M_FATAL, "Unable to communicate with NDM core (add route)");
+
+            return -EFAULT;
+        }
+
+        return 0;
+    }
 #else /* defined(ENABLE_NDM_INTEGRATION) */
     return sitnl_route_add(iface, AF_INET6, dst, prefixlen, gw, table,
                            metric);
@@ -1436,8 +1479,48 @@ net_route_v6_del(openvpn_net_ctx_t *ctx, const struct in6_addr *dst,
         np(iface), table, metric);
 
 #if defined(ENABLE_NDM_INTEGRATION)
-        msg(M_WARN, "IPv6 routes is not supported yet");
-        return -EINVAL;
+    inet_ntop(AF_INET6, &dst_v6.ipv6, dst_str, sizeof(dst_str));
+    inet_ntop(AF_INET6, &gw_v6.ipv6, gw_str, sizeof(gw_str));
+
+    {
+        char buf[1024];
+
+        memset(buf, 0, sizeof(buf));
+
+        snprintf(buf, sizeof(buf), "%s%s/%s",
+            NDM_OPENVPN_DIR,
+            NDM_INSTANCE_NAME,
+            NDM_FEEDBACK_NETWORK);
+
+        const char *args[] =
+        {
+            buf,
+            NDM_INSTANCE_NAME,
+            NDM_ROUTE,
+            NDM_DEL6,
+            NULL
+        };
+
+        if( !ndm_feedback(
+                NDM_FEEDBACK_TIMEOUT_MSEC,
+                args,
+                "%s=%s" NESEP_
+                "%s=%d" NESEP_
+                "%s=%s" NESEP_
+                "%s=%d",
+                "network", dst_str,
+                "netmask", prefixlen,
+                "gw", gw_str,
+                "metric", metric
+                ) )
+        {
+            msg(M_FATAL, "Unable to communicate with NDM core (del route)");
+
+            return -EFAULT;
+        }
+
+        return 0;
+    }
 #else /* defined(ENABLE_NDM_INTEGRATION) */
     return sitnl_route_del(iface, AF_INET6, &dst_v6, prefixlen, &gw_v6,
                            table, metric);
