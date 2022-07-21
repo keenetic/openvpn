@@ -423,7 +423,8 @@ set_sock_extended_error_passing(int sd)
             "Note: enable extended error passing on TCP/UDP socket failed (IP_RECVERR)");
     }
     /* see "man 7 ipv6" (on Linux) */
-    if (setsockopt(sd, IPPROTO_IPV6, IPV6_RECVERR, (void *) &on, sizeof(on)) != 0)
+    if (setsockopt(sd, IPPROTO_IPV6, IPV6_RECVERR, (void *) &on, sizeof(on)) != 0 &&
+        errno != ENOPROTOOPT)
     {
         msg(M_WARN | M_ERRNO,
             "Note: enable extended error passing on TCP/UDP socket failed (IPV6_RECVERR)");
