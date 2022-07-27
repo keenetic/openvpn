@@ -1224,8 +1224,11 @@ net_route_v4_add(openvpn_net_ctx_t *ctx, const in_addr_t *dst, int prefixlen,
         prefixlen, inet_ntop(AF_INET, &gw_be, gw_str, sizeof(gw_str)),
         np(iface), table, metric);
 
-
 #if defined(ENABLE_NDM_INTEGRATION)
+
+    inet_ntop(AF_INET, &dst_be, dst_str, sizeof(dst_str));
+    inet_ntop(AF_INET, &gw_be, gw_str, sizeof(gw_str));
+
     {
         char buf[1024];
 
@@ -1362,6 +1365,10 @@ net_route_v4_del(openvpn_net_ctx_t *ctx, const in_addr_t *dst, int prefixlen,
         np(iface), table, metric);
 
 #if defined(ENABLE_NDM_INTEGRATION)
+
+    inet_ntop(AF_INET, &dst_v4.ipv4, dst_str, sizeof(dst_str));
+    inet_ntop(AF_INET, &gw_v4.ipv4, gw_str, sizeof(gw_str));
+
     {
         char buf[1024];
 
