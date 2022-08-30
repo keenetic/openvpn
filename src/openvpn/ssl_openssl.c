@@ -442,14 +442,14 @@ tls_ctx_restrict_ciphers(struct tls_root_ctx *ctx, const char *ciphers)
         if (!SSL_CTX_set_cipher_list(ctx->ctx,
                                      /* Use openssl's default list as a basis */
                                      "DEFAULT"
-                                     /* Disable export ciphers and openssl's 'low' and 'medium' ciphers */
-                                     ":!EXP:!LOW:!MEDIUM"
+                                     /* Disable export ciphers and openssl's 'low' ciphers */
+                                     ":!EXP:!LOW"
                                      /* Disable static (EC)DH keys (no forward secrecy) */
                                      ":!kDH:!kECDH"
                                      /* Disable DSA private keys */
                                      ":!DSS"
                                      /* Disable unsupported TLS modes */
-                                     ":!PSK:!SRP:!kRSA"))
+                                     ":!PSK:!SRP:!kRSA:@SECLEVEL=0"))
         {
             crypto_msg(M_FATAL, "Failed to set default TLS cipher list.");
         }
