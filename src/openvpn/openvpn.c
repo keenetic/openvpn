@@ -121,6 +121,17 @@ init_early(struct context *c)
         c->options.providers.providers[j] =
             crypto_load_provider(c->options.providers.names[j]);
     }
+
+    /* Load legacy provider if no explicit configuration in config was given */
+    if (c->options.providers.names[1] == NULL)
+    {
+        c->options.providers.names[1] = "default";
+        c->options.providers.providers[1] =
+            crypto_load_provider(c->options.providers.names[1]);
+        c->options.providers.names[2] = "legacy";
+        c->options.providers.providers[2] =
+            crypto_load_provider(c->options.providers.names[2]);
+    }
 }
 
 static void
