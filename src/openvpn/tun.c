@@ -1026,6 +1026,11 @@ do_ifconfig_ipv6(struct tuntap *tt, const char *ifname, int tun_mtu,
     const char *ifconfig_ipv6_local = print_in6_addr(tt->local_ipv6, 0, &gc);
 #endif
 
+#if defined(ENABLE_NDM_INTEGRATION)
+     msg(M_INFO, "IPv6 is not supported yet (ifconfig)");
+     return;
+#endif
+
 #if defined(TARGET_LINUX)
     if (net_iface_mtu_set(ctx, ifname, tun_mtu) < 0)
     {
