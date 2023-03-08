@@ -210,6 +210,7 @@ get_user_pass_cr(struct user_pass *up,
         else if (flags & GET_USER_PASS_INLINE_CREDS)
         {
             struct buffer buf;
+            bool full_creds = false;
 
             if (!auth_file)
             {
@@ -232,15 +233,19 @@ get_user_pass_cr(struct user_pass *up,
                 if (!(flags & GET_USER_PASS_PASSWORD_ONLY))
                 {
                     buf_parse(&buf, '\n', up->username, USER_PASS_LEN);
+                    full_creds = true;
                 }
                 buf_parse(&buf, '\n', up->password, USER_PASS_LEN);
             }
 
-            buf_parse(&buf, '\n', up->password, USER_PASS_LEN);
-
-            if (strlen(up->password) == 0)
+            if (!full_creds)
             {
-                password_from_stdin = 1;
+                buf_parse(&buf, '\n', up->password, USER_PASS_LEN);
+
+                if (strlen(up->password) == 0)
+                {
+                    msg(M_FATAL, "ERROR: interactive console requests is unsupported");
+                }
             }
         }
         /*
