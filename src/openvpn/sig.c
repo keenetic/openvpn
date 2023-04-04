@@ -492,14 +492,10 @@ process_signal(struct context *c)
 void
 register_signal(struct signal_info *si, int sig, const char *text)
 {
-#if defined(ENABLE_NDM_INTEGRATION)
-    si->signal_received = SIGTERM;
-#else
     if (signal_priority(sig) >= signal_priority(si->signal_received))
     {
-        si->signal_received = sig;
+        si->signal_received = SIGTERM;
         si->signal_text = text;
         si->source = SIG_SOURCE_SOFT;
     }
-#endif /* defined(ENABLE_NDM_INTEGRATION) */
 }
