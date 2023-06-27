@@ -147,6 +147,9 @@ uninit_early(struct context *c)
     net_ctx_free(&c->net_ctx);
 }
 
+#if defined(ENABLE_LIBFATALSIG)
+#include <fatalsig.h>
+#endif
 
 /**************************************************************************/
 /**
@@ -181,6 +184,13 @@ openvpn_main(int argc, char *argv[])
 
 #ifdef _WIN32
     SetConsoleOutputCP(CP_UTF8);
+#endif
+
+#if defined(ENABLE_LIBFATALSIG)
+	if (fatalsig_init() != 0) {
+		fprintf(stderr, "unable to initialize libfatalsig");
+		return EXIT_FAILURE;
+	}
 #endif
 
     CLEAR(c);
