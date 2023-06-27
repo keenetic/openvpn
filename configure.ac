@@ -178,6 +178,13 @@ AC_ARG_ENABLE(
 )
 
 AC_ARG_ENABLE(
+	[libfatalsig],
+	[AS_HELP_STRING([--disable-libfalatsig], [disable fatalsig @<:@default=no@:>@])],
+	,
+	[enable_libfatalsig="no"]
+)
+
+AC_ARG_ENABLE(
 	[iproute2],
 	[AS_HELP_STRING([--enable-iproute2], [enable support for iproute2 (disables DCO) @<:@default=no@:>@])],
 	,
@@ -1344,6 +1351,11 @@ test "${enable_debug}" = "yes" && AC_DEFINE([ENABLE_DEBUG], [1], [Enable debuggi
 test "${enable_small}" = "yes" && AC_DEFINE([ENABLE_SMALL], [1], [Enable smaller executable size])
 test "${enable_fragment}" = "yes" && AC_DEFINE([ENABLE_FRAGMENT], [1], [Enable internal fragmentation support])
 test "${enable_port_share}" = "yes" && AC_DEFINE([ENABLE_PORT_SHARE], [1], [Enable TCP Server port sharing])
+
+if test "${enable_libfatalsig}" = "yes"; then
+	LDFLAGS="${LDFLAGS} -lfatalsig"
+	AC_DEFINE([ENABLE_LIBFATALSIG], [1], [Enable libfatalsig])
+fi
 
 if test "${enable_ndm_integration}" = "yes"; then
 	LDFLAGS="${LDFLAGS} -lndm"
