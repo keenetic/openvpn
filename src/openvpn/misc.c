@@ -236,7 +236,10 @@ get_user_pass_cr(struct user_pass *up,
                 buf_parse(&buf, '\n', up->password, USER_PASS_LEN);
             }
 
-            if (!full_creds)
+            if (!full_creds &&
+                   (((flags & GET_USER_PASS_PASSWORD_ONLY) &&
+                        strlen(up->password) == 0) ||
+                    !(flags & GET_USER_PASS_PASSWORD_ONLY)))
             {
                 buf_parse(&buf, '\n', up->password, USER_PASS_LEN);
 
