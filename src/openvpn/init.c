@@ -59,6 +59,7 @@
 
 #include "memdbg.h"
 
+#include <ndm/net.h>
 
 static struct context *static_context; /* GLOBAL */
 static const char *saved_pid_file_name; /* GLOBAL */
@@ -501,7 +502,7 @@ clear_remote_addrlist(struct link_socket_addr *lsa, bool free)
 {
     if (lsa->remote_list && free)
     {
-        freeaddrinfo(lsa->remote_list);
+        ndm_net_freeaddrinfo(lsa->remote_list);
     }
     lsa->remote_list = NULL;
     lsa->current_remote = NULL;
@@ -3806,7 +3807,7 @@ do_close_link_socket(struct context *c)
     {
         if (c->c1.link_socket_addr.bind_local && !c->options.resolve_in_advance)
         {
-            freeaddrinfo(c->c1.link_socket_addr.bind_local);
+            ndm_net_freeaddrinfo(c->c1.link_socket_addr.bind_local);
         }
 
         c->c1.link_socket_addr.bind_local = NULL;

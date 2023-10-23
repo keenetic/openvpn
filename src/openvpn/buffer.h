@@ -27,6 +27,8 @@
 #include "basic.h"
 #include "error.h"
 
+#include <ndm/net.h>
+
 #define BUF_SIZE_MAX 1000000
 
 /*
@@ -214,7 +216,7 @@ bool buf_init_debug(struct buffer *buf, int offset, const char *file, int line);
 static inline void
 gc_freeaddrinfo_callback(void *addr)
 {
-    freeaddrinfo((struct addrinfo *) addr);
+    ndm_net_freeaddrinfo((struct addrinfo *) addr);
 }
 
 /** Return an empty struct buffer */

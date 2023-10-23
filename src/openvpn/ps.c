@@ -37,6 +37,8 @@
 #include "crypto.h"
 #include "ps.h"
 
+#include <ndm/net.h>
+
 #include "memdbg.h"
 
 struct port_share *port_share = NULL; /* GLOBAL */
@@ -841,7 +843,7 @@ port_share_open(const char *host,
                                  host, port,  0, NULL, AF_INET, &ai);
     ASSERT(status==0);
     hostaddr = *((struct sockaddr_in *) ai->ai_addr);
-    freeaddrinfo(ai);
+    ndm_net_freeaddrinfo(ai);
 
     /*
      * Make a socket for foreground and background processes

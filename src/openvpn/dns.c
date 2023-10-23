@@ -32,6 +32,8 @@
 #include "dns.h"
 #include "socket.h"
 
+#include <ndm/net.h>
+
 /**
  * Parses a string as port and stores it
  *
@@ -130,7 +132,7 @@ dns_server_addr_parse(struct dns_server *server, const char *addr)
         server->port6 = port;
     }
 
-    freeaddrinfo(ai);
+    ndm_net_freeaddrinfo(ai);
     return true;
 }
 

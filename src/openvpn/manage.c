@@ -47,6 +47,8 @@
 
 #include "memdbg.h"
 
+#include <ndm/net.h>
+
 #ifdef ENABLE_PKCS11
 #include "pkcs11.h"
 #endif
@@ -2553,7 +2555,7 @@ man_settings_close(struct man_settings *ms)
 {
     if (ms->local)
     {
-        freeaddrinfo(ms->local);
+        ndm_net_freeaddrinfo(ms->local);
     }
     CLEAR(*ms);
 }

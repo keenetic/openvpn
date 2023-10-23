@@ -43,6 +43,8 @@
 #include "options.h"
 #include "networking.h"
 
+#include <ndm/net.h>
+
 #include "memdbg.h"
 
 #if defined(TARGET_LINUX) || defined(TARGET_ANDROID)

@@ -44,6 +44,8 @@
 
 #include "memdbg.h"
 
+#include <ndm/net.h>
+
 /*
  * Convert sockflags/getaddr_flags into getaddr_flags
  */
@@ -172,7 +174,7 @@ get_addr_generic(sa_family_t af, unsigned int flags, const char *hostname,
         *sep = '/';
     }
 out:
-    freeaddrinfo(ai);
+    ndm_net_freeaddrinfo(ai);
     free(var_host);
 
     return ret;
@@ -472,7 +474,7 @@ openvpn_getaddrinfo(unsigned int flags,
     /* try numeric ipv6 addr first */
     CLEAR(hints);
     hints.ai_family = ai_family;
-    hints.ai_flags = AI_NUMERICHOST;
+    hints.ai_flags = AI_NUMERICHOST | AI_RECURSIVE;
 
     if (flags & GETADDR_PASSIVE)
     {
@@ -488,7 +490,7 @@ openvpn_getaddrinfo(unsigned int flags,
         hints.ai_socktype = SOCK_STREAM;
     }
 
-    status = getaddrinfo(hostname, servname, &hints, res);
+    status = ndm_net_getaddrinfo(hostname, servname, &hints, res);
 
     if (status != 0) /* parse as numeric address failed? */
     {
@@ -559,7 +561,7 @@ openvpn_getaddrinfo(unsigned int flags,
             dmsg(D_SOCKET_DEBUG,
                  "GETADDRINFO flags=0x%04x ai_family=%d ai_socktype=%d",
                  flags, hints.ai_family, hints.ai_socktype);
-            status = getaddrinfo(hostname, servname, &hints, res);
+            status = ndm_net_getaddrinfo(hostname, servname, &hints, res);
 
             if (sig_info)
             {
@@ -580,7 +582,7 @@ openvpn_getaddrinfo(unsigned int flags,
                         if (0 == status)
                         {
                             ASSERT(res);
-                            freeaddrinfo(*res);
+                            ndm_net_freeaddrinfo(*res);
                             *res = NULL;
                             status = EAI_AGAIN; /* = temporary failure */
                             errno = EINTR;
@@ -608,7 +610,7 @@ openvpn_getaddrinfo(unsigned int flags,
                 fmt,
                 print_hostname,
                 print_servname,
-                gai_strerror(status));
+                ndm_net_gai_strerror(status));
 
             if (--resolve_retries <= 0)
             {
@@ -1357,13 +1359,13 @@ socket_listen_accept(socket_descriptor_t sd,
                 {
                     msg(M_ERR, "TCP: close socket failed (new_sd)");
                 }
-                freeaddrinfo(ai);
+                ndm_net_freeaddrinfo(ai);
             }
             else
             {
                 if (ai)
                 {
-                    freeaddrinfo(ai);
+                    ndm_net_freeaddrinfo(ai);
                 }
                 break;
             }
@@ -2129,7 +2131,7 @@ phase2_socks_client(struct link_socket *sock, struct signal_info *sig_info)
     addr_zero_host(&sock->info.lsa->actual.dest);
     if (sock->info.lsa->remote_list)
     {
-        freeaddrinfo(sock->info.lsa->remote_list);
+        ndm_net_freeaddrinfo(sock->info.lsa->remote_list);
         sock->info.lsa->current_remote = NULL;
         sock->info.lsa->remote_list = NULL;
     }
