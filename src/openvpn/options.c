@@ -900,9 +900,7 @@ init_options(struct options *o, const bool init_gc)
 #endif /* _WIN32 */
     o->allow_recursive_routing = false;
 
-#ifndef ENABLE_DCO
     o->tuntap_options.disable_dco = true;
-#endif /* ENABLE_DCO */
 
     o->remote_random = true;
 }
@@ -6011,6 +6009,10 @@ add_option(struct options *options,
     {
         options->tuntap_options.disable_dco = true;
     }
+    else if (streq(p[0], "enable-dco"))
+    {
+        options->tuntap_options.disable_dco = false;
+    }
     else if (streq(p[0], "dev-node") && p[1] && !p[2])
     {
         VERIFY_PERMISSION(OPT_P_GENERAL);
@@ -9483,7 +9485,6 @@ add_option(struct options *options,
         {
             if (streq(p[0], options->ignore_unknown_option[i]))
             {
-                msglevel_unknown = M_WARN;
                 break;
             }
         }
@@ -9494,7 +9495,7 @@ add_option(struct options *options,
         }
         else
         {
-            msg(msglevel_unknown, "Unrecognized option or missing or extra parameter(s): --%s (%s)", p[0], PACKAGE_VERSION);
+            msg(msglevel, "Unrecognized option or missing or extra parameter(s): --%s (%s)", p[0], PACKAGE_VERSION);
         }
     }
 err:
