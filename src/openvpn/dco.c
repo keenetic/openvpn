@@ -412,7 +412,7 @@ dco_check_option(int msglevel, const struct options *o)
     }
 
 #if defined(USE_COMP)
-    if (o->comp.alg != COMP_ALG_UNDEF
+    if ((o->comp.alg != COMP_ALG_UNDEF && o->comp.alg != COMP_ALG_STUB)
         || o->comp.flags & COMP_F_ALLOW_ASYM
         || o->comp.flags & COMP_F_ALLOW_COMPRESS)
     {
@@ -482,7 +482,8 @@ dco_p2p_add_new_peer(struct context *c)
     }
 #endif
     int ret = dco_new_peer(&c->c1.tuntap->dco, multi->peer_id,
-                           c->c2.link_socket->sd, NULL, remoteaddr, NULL, NULL);
+                           c->c2.link_socket->sd, NULL, remoteaddr, NULL, NULL,
+                           c->options.comp.alg == COMP_ALG_STUB);
     if (ret < 0)
     {
         return ret;
@@ -600,7 +601,8 @@ dco_multi_add_new_peer(struct multi_context *m, struct multi_instance *mi)
     }
 
     int ret = dco_new_peer(&c->c1.tuntap->dco, peer_id, sd, localaddr,
-                           remoteaddr, vpn_addr4, vpn_addr6);
+                           remoteaddr, vpn_addr4, vpn_addr6,
+                           c->options.comp.alg == COMP_ALG_STUB);
     if (ret < 0)
     {
         return ret;

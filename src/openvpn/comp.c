@@ -162,6 +162,11 @@ comp_generate_peer_info_string(const struct compress_options *opt, struct buffer
 bool
 check_compression_settings_valid(struct compress_options *info, int msglevel)
 {
+    if ((info->flags & COMP_F_ALLOW_STUB_ONLY) && !comp_non_stub_enabled(info))
+    {
+        return true;
+    }
+
     /*
      * We also allow comp-stub-v2 here as it technically allows escaping of
      * weird mac address and IPv5 protocol but practically always is used

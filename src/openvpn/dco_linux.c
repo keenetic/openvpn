@@ -220,7 +220,8 @@ mapped_v4_to_v6(struct sockaddr *sock, struct gc_arena *gc)
 int
 dco_new_peer(dco_context_t *dco, unsigned int peerid, int sd,
              struct sockaddr *localaddr, struct sockaddr *remoteaddr,
-             struct in_addr *remote_in4, struct in6_addr *remote_in6)
+             struct in_addr *remote_in4, struct in6_addr *remote_in6,
+             const int comp_stub)
 {
     struct gc_arena gc = gc_new();
     const char *remotestr = "[undefined]";
@@ -272,6 +273,9 @@ dco_new_peer(dco_context_t *dco, unsigned int peerid, int sd,
         NLA_PUT(nl_msg, OVPN_NEW_PEER_ATTR_IPV6, sizeof(struct in6_addr),
                 remote_in6);
     }
+
+    NLA_PUT_U32(nl_msg, OVPN_NEW_PEER_ATTR_COMP_STUB, !!comp_stub);
+
     nla_nest_end(nl_msg, attr);
 
     ret = ovpn_nl_msg_send(dco, nl_msg, NULL, NULL, __func__);
@@ -615,7 +619,8 @@ nla_put_failure:
 
 int
 dco_set_peer(dco_context_t *dco, unsigned int peerid,
-             int keepalive_interval, int keepalive_timeout, int mss)
+             int keepalive_interval, int keepalive_timeout, int mss,
+             const int comp_stub)
 {
     msg(D_DCO_DEBUG, "%s: peer-id %d, keepalive %d/%d, mss %d", __func__,
         peerid, keepalive_interval, keepalive_timeout, mss);
@@ -633,6 +638,7 @@ dco_set_peer(dco_context_t *dco, unsigned int peerid,
                 keepalive_interval);
     NLA_PUT_U32(nl_msg, OVPN_SET_PEER_ATTR_KEEPALIVE_TIMEOUT,
                 keepalive_timeout);
+    NLA_PUT_U32(nl_msg, OVPN_SET_PEER_ATTR_COMP_STUB, !!comp_stub);
     nla_nest_end(nl_msg, attr);
 
     ret = ovpn_nl_msg_send(dco, nl_msg, NULL, NULL, __func__);
