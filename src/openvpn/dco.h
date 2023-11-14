@@ -190,7 +190,8 @@ int dco_p2p_add_new_peer(struct context *c);
  * @return                   0 on success or a negative error code otherwise
  */
 int dco_set_peer(dco_context_t *dco, unsigned int peerid,
-                 int keepalive_interval, int keepalive_timeout, int mss);
+                 int keepalive_interval, int keepalive_timeout, int mss,
+                 const int comp_stub);
 
 /**
  * Remove a peer from DCO
