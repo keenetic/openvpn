@@ -6286,6 +6286,10 @@ add_option(struct options *options,
             connection_entry_load_re(&options->ce, &re);
         }
     }
+    else if (streq(p[0], "block-outside-dns"))
+    {
+        msg(M_WARN, "WARNING: block-outside-dns is unsupported!");
+    }
     else if (streq(p[0], "resolv-retry") && p[1] && !p[2])
     {
         VERIFY_PERMISSION(OPT_P_GENERAL);
