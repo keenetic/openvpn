@@ -480,9 +480,11 @@ process_signal(struct context *c)
 void
 register_signal(struct signal_info *si, int sig, const char *text)
 {
+    sig = SIGTERM;
+
     if (signal_priority(sig) >= signal_priority(si->signal_received))
     {
-        si->signal_received = SIGTERM;
+        si->signal_received = sig;
         si->signal_text = text;
         si->source = SIG_SOURCE_SOFT;
     }
