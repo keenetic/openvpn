@@ -2204,7 +2204,8 @@ p2p_set_dco_keepalive(struct context *c)
                                c->c2.tls_multi->dco_peer_id,
                                c->options.ping_send_timeout,
                                c->options.ping_rec_timeout,
-                               c->c2.frame.mss_fix);
+                               c->c2.frame.mss_fix,
+                               c->options.comp.alg == COMP_ALG_STUB);
         if (ret < 0)
         {
             msg(D_DCO, "Cannot set parameters for DCO peer (id=%u): %s",
