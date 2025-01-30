@@ -518,7 +518,7 @@ openvpn_getaddrinfo(unsigned int flags,
 
     /* try numeric ipv6 addr first */
     CLEAR(hints);
-    hints.ai_family = ai_family;
+    hints.ai_family = (ai_family == AF_UNSPEC ? AF_INET : ai_family);
     hints.ai_flags = AI_NUMERICHOST;
 
     if (flags & GETADDR_PASSIVE)
