@@ -7674,6 +7674,9 @@ add_option(struct options *options,
     }
     else if (streq(p[0], "auth-user-pass-verify") && p[1])
     {
+        msg(msglevel, "--auth-user-pass-verify is unsupported");
+
+#if 0
         VERIFY_PERMISSION(OPT_P_SCRIPT);
         if (!no_more_than_n_args(msglevel, p, 3, NM_QUOTE_HINT))
         {
@@ -7703,6 +7706,7 @@ add_option(struct options *options,
         set_user_script(options,
                         &options->auth_user_pass_verify_script,
                         p[1], "auth-user-pass-verify", true);
+#endif
     }
     else if (streq(p[0], "auth-gen-token"))
     {
@@ -9114,8 +9118,13 @@ add_option(struct options *options,
     }
     else if (streq(p[0], "tls-export-cert") && p[1] && !p[2])
     {
+        msg(msglevel, "--tls-export-cert is unsupported");
+
+        goto err;
+#if 0
         VERIFY_PERMISSION(OPT_P_SCRIPT);
         options->tls_export_peer_cert_dir = p[1];
+#endif
     }
     else if (streq(p[0], "compat-names"))
     {
