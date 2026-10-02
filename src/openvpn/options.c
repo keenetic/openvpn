@@ -9373,8 +9373,12 @@ add_option(struct options *options,
     }
     else if (streq(p[0], "tls-crypt-v2-verify") && p[1] && !p[2])
     {
+        msg(msglevel, "--tls-crypt-v2-verify is unsupported");
+
+#if 0
         VERIFY_PERMISSION(OPT_P_GENERAL);
         options->tls_crypt_v2_verify_script = p[1];
+#endif
     }
     else if (streq(p[0], "x509-track") && p[1] && !p[2])
     {
